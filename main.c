@@ -53,8 +53,8 @@ void update(SDL_Renderer *rend) {
 void mouse(int* MAP){
   int x, y;
   Uint32 keys = SDL_GetMouseState(&x, &y);
-  int nx = x/RECT_S;
-  int ny = y/RECT_S;
+  int nx = x/CELL_W;
+  int ny = y/CELL_H;
   if((keys & SDL_BUTTON_LMASK) != 0){
     MAP[ny*MAP_W+nx] = 1;
   }
