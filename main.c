@@ -10,8 +10,17 @@
 #define YS 1
 #define XS 1
 
+typedef struct Body {
+  struct Body *b;
+  int x, y;
+  int dx, dy;
+} Body;
+
 typedef struct Snake {
   int x, y;
+  //Direction
+  int dx, dy;
+  
 } Snake;
 
 void draw_arr(int arr[], SDL_Renderer *rend) {
@@ -28,6 +37,9 @@ void draw_arr(int arr[], SDL_Renderer *rend) {
         SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
       } else {
         SDL_SetRenderDrawColor(rend, 0, 255, 0, 255);
+      }
+      if (arr[y * MAP_W + x] == 2){
+	SDL_SetRenderDrawColor(rend, 0, 0, 255, 255);
       }
       SDL_RenderFillRect(rend, &rect);
     }
@@ -66,9 +78,36 @@ void mouse(int* MAP){
   
 }
 
+Snake new_snake(void){
+  Snake new;
+  new.x = MAP_W/2;
+  new.y = MAP_H/2;
+  new.dx = 0;
+  new.dy = 0;
+  return new;
+}
 
+Body new_body(void){
+  Body new;
+  new.x = MAP_W/2;
+  new.y = MAP_H/2;
+  new.dx = 0;
+  new.dy = 0;
+  new.b = 0;
+  return new;
+}
 
-void snake_man(Snake *s, int MAP[], int interval){
+void  body_man(Body *body, int MAP[], Snake *s){
+  body->x = s->dx + s->x;
+  body->y = s->dy + s->y;
+
+  MAP[body->y*MAP_W+body->x] = 2;
+  s->dy = 0;
+  s->dx = 0;
+}
+  
+
+void snake_man(Snake *s, int MAP[]){
   const Uint8* keys = SDL_GetKeyboardState(NULL);
 
   int UP, DOWN, LEFT, RIGHT;
@@ -77,29 +116,45 @@ void snake_man(Snake *s, int MAP[], int interval){
   DOWN = (s->y + YS);
   RIGHT = (s->x + XS);
   LEFT = (s->x - XS);
+
   
   if(keys[SDL_SCANCODE_UP] && UP < MAP_H && UP >= 0){
-    MAP[s->y*MAP_W+s->x] = 0;
+    // MAP[s->y*MAP_W+s->x] = 1;
     s->y = UP;
+    s->dy = 1;
+    // s->dx = 0;
     
   }
   if(keys[SDL_SCANCODE_RIGHT] && RIGHT < MAP_W && RIGHT >= 0){
-    MAP[s->y*MAP_W+s->x] = 0;
+    // MAP[s->y*MAP_W+s->x] = 1;
     s->x = RIGHT;
-    
+    s->dx = -1;
+    // s->dy = 0;
   }
   if(keys[SDL_SCANCODE_DOWN] && DOWN < MAP_H && DOWN >= 0){
-    MAP[s->y*MAP_W+s->x] = 0;
+    // MAP[s->y*MAP_W+s->x] = 1;
     s->y = DOWN;
+    s->dy = -1;
+    // s->dx = 0;
     
   }
   if(keys[SDL_SCANCODE_LEFT] && LEFT < MAP_W && LEFT >= 0){
-    MAP[s->y*MAP_W+s->x] = 0;
+    //  MAP[s->y*MAP_W+s->x] = 1;
     s->x = LEFT;
+    s->dx = 1;
+    // s->dy = 0;
     
   }
+  /*
+  if(s->dx == s->dy && s->dx != 0){
+    MAP[s->y*MAP_W+s->x] = 0;
+    return;
+  }
+  */
   MAP[s->y*MAP_W+s->x] = 1;
 }
+
+
   
 
 int main(void) {
@@ -109,22 +164,20 @@ int main(void) {
 
   int MAP[MAP_W * MAP_H] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   
-  Snake snake;
-  snake.x = MAP_W/2;
-  snake.y = MAP_H/2;
-  int last_time = 0;
+  Snake snake = new_snake();
+  Body body = new_body();
   while (1) {
-    int elapsed = SDL_GetTicks();
-    int interval = elapsed - last_time;
+    SDL_Delay(75);
     if (quit()) {
       break;
     };
     update(rend);
     mouse(MAP);
-    SDL_Delay((interval/1.5));
-    snake_man(&snake, MAP, interval);
+    snake_man(&snake, MAP);
+    body_man(&body, MAP, &snake);
     draw_arr(MAP, rend);
+    //Clean board
+    memset(MAP, 0, sizeof(int)*(MAP_W * MAP_H));
     SDL_RenderPresent(rend);
-    last_time = elapsed;
   }
 }
